@@ -1,8 +1,7 @@
 # Workflow::Join
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/workflow/join`. To experiment with that code, run `bin/console` for an interactive prompt.
+[![Build Status](https://travis-ci.org/am-kantox/workflow-join.svg?branch=master)](https://travis-ci.org/am-kantox/workflow-join)
 
-TODO: Delete this and the text above, and describe your gem
 
 ## Installation
 
@@ -22,7 +21,38 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+```ruby
+class Master
+  include Workflow
+
+  attr_accessor :slave
+
+  def initialize(*)
+    @slave = Slave.new
+  end
+
+  workflow do
+    state :meeting do
+      event :go, transitions_to: :after_meeting
+    end
+    state :after_meeting
+
+    # before entering :after_meeting state, wait for @slave to enter :resolved state
+    guard :@slave, inner: :after_meeting, outer: :resolved
+  end
+end
+
+class Slave
+  include Workflow
+
+  workflow do
+    state :unresolved do
+      event :resolve, transitions_to: :resolved
+    end
+    state :resolved
+  end
+end
+```
 
 ## Development
 
@@ -38,4 +68,3 @@ Bug reports and pull requests are welcome on GitHub at https://github.com/[USERN
 ## License
 
 The gem is available as open source under the terms of the [MIT License](http://opensource.org/licenses/MIT).
-

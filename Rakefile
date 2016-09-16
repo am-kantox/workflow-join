@@ -15,10 +15,17 @@ rescue Bundler::BundlerError => e
   exit e.status_code
 end
 
-desc 'Tests'
+desc 'Tests w/ActiveRecord'
 RSpec::Core::RakeTask.new(:spec) do |spec|
   spec.rspec_opts = '-Ispec'
   #  spec.rcov = true
 end
 
-task default: [:spec]
+desc 'Tests wo/ActiveRecord'
+RSpec::Core::RakeTask.new(:spec_simple) do |spec|
+  ENV['USE_SIMPLE_PERSISTENCE'] = 'true'
+  spec.rspec_opts = '-Ispec'
+  #  spec.rcov = true
+end
+
+task default: [:spec, :spec_simple]

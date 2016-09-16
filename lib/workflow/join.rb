@@ -2,14 +2,11 @@ require 'workflow'
 require 'workflow/join/version'
 
 Workflow::ClassMethods.prepend(Module.new do
-  attr_reader :host
-
   def workflow(&specification)
     # extend instances
     prepend(Module.new do # this should be safe, since there could not be two subsequent workflow DSL
       attr_reader :pending_transitions # FIXME PERSIST!!!
       def guards!
-        spec.instance_variable_set(:@host, self)
         λλs = spec.guards.map do |inner, outers|
                 outers.map do |getter, state|
                   guard! inner, getter, state
@@ -20,7 +17,7 @@ Workflow::ClassMethods.prepend(Module.new do
       end
 
       def guard!(inner, getter, state)
-        slave = getter.call
+        slave = getter.call(self)
         slave.instance_variable_set(:@☛, (slave.instance_variable_get(:@☛) || []) | [self])
         slave_hook = "on_#{state}_entry".to_sym
         slave.class.prepend(Module.new do
@@ -41,7 +38,8 @@ Workflow::ClassMethods.prepend(Module.new do
         end)
         lambda do |_, to, name, *|
           if to.to_sym == inner && !slave.send("#{state}?".to_sym)
-            (@pending_transitions ||= []) << name
+            @pending_transitions ||= []
+            @pending_transitions |= [name]
             halt("Waiting for guard workflow to enter “:#{state}” state")
           end
         end
@@ -77,12 +75,12 @@ module Workflow
                 Proc.new
               else
                 g = getter.to_sym
-                lambda do
+                lambda do |host|
                   case
-                  when /\A@/ =~ g.to_s && @host.instance_variable_defined?(g)
-                    @host.instance_variable_get(g)
-                  when @host.methods.include?(g) && @host.method(g).arity.zero?
-                    @host.send g
+                  when /\A@/ =~ g.to_s && host.instance_variable_defined?(g)
+                    host.instance_variable_get(g)
+                  when host.methods.include?(g) && host.method(g).arity.zero?
+                    host.send g
                   end.tap do |guard_instance|
                     fail Workflow::WorkflowDefinitionError, GUARD_IS_NOT_WORKFLOW unless guard_instance.is_a?(Workflow)
                   end

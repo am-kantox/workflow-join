@@ -20,6 +20,8 @@ class Master
 
     # before entering :after_meeting state, wait for @slave to enter :resolved state
     guard :@slave, inner: :after_meeting, outer: :resolved
+    guard :slave, inner: :after_meeting, outer: :resolved
+    guard inner: :after_meeting, outer: :resolved, &:slave
   end
 end
 

@@ -32,5 +32,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'sqlite3'
 
   spec.add_dependency 'workflow', '~> 1.2'
-  spec.add_dependency 'activerecord'
+  spec.add_dependency 'activerecord', '>= 3.2.1', '< 5.0.0'
 end

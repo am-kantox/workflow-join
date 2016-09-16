@@ -39,6 +39,8 @@ class Master
 
     # before entering :after_meeting state, wait for @slave to enter :resolved state
     guard :@slave, inner: :after_meeting, outer: :resolved
+    # OR:   guard :slave, inner: :after_meeting, outer: :resolved
+    # OR:   guard inner: :after_meeting, outer: :resolved, &:slave
   end
 end
 
@@ -53,6 +55,55 @@ class Slave
   end
 end
 ```
+
+### `ActiveRecord` support
+
+Introduce two new fields in each model, that uses workflow joins:
+
+* `workflow_pending_transitions`,
+* `workflow_pending_callbacks`
+
+and enjoy:
+
+```ruby
+  class Master < ActiveRecord::Base
+    has_one :slave
+
+    include Workflow
+
+    workflow do
+      state :meeting do
+        event :go, transitions_to: :after_meeting
+      end
+      state :after_meeting
+
+      # before entering :after_meeting state, wait for @slave to enter :resolved state
+      guard :slave, inner: :after_meeting, outer: :resolved
+      # OR: guard inner: :after_meeting, outer: :resolved, &:slave
+    end
+  end
+
+  class Slave < ActiveRecord::Base
+    belongs_to :master
+
+    include Workflow
+
+    workflow do
+      state :unresolved do
+        event :resolve, transitions_to: :resolved
+      end
+      state :resolved
+    end
+  end
+```
+
+As a matter of fact, this gem tries to create the fields above on first usage,
+but since it happens in the middle of class loading process, the whole
+application start crashes. That is an intended behavior! The columns will be
+created and simple application restart will enable the feature.
+
+This part is hardly tested, though, that’s why the preferred way would be to
+create columns manually.
 
 ## Development
 

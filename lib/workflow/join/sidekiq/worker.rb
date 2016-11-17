@@ -15,16 +15,25 @@ module Workflow
           def worker?(base)
             base.ancestors.include?(::Sidekiq::Worker)
           end
+
+          def wrap(worker)
+            case worker
+            when String, Symbol then Kernel.const_get(worker)
+            when Module then worker
+            else fail ArgumentError, "Workflow::Join::Sidekiq::Worker#wrap expects a string/class as an argument, got #{worker.inspect}."
+            end.prepend Workflow::Join::Sidekiq::Worker
+          end
         end
 
         def perform(*args)
-          Job.create!(args: args, worker: self.class.to_s).tap do |job|
+          Job.find(args.pop['★']).tap do |job|
             begin
-              job.run!
-              job.result = super
+              job.args = args
+              job.result = super(*job.args)
               job.success!
             rescue => e
-              job.error! e
+              job.fail! e
+              raise e
             end
           end
         end

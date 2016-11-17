@@ -1,8 +1,12 @@
 # $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
-require 'workflow/join'
 
 require 'pry'
 require 'logger'
+
+require_relative 'spec_sqlite_helper' unless ENV['USE_SIMPLE_PERSISTENCE'] == 'true'
+
+require 'rspec-sidekiq'
+require 'workflow/join'
 
 describe Workflow::Join do
   it 'has a version number' do
@@ -15,31 +19,11 @@ if Workflow::Join.const_defined?('ActiveRecord')
   Object.send(:remove_const, 'Master') if Kernel.const_defined?('Master')
   Object.send(:remove_const, 'Slave') if Kernel.const_defined?('Slave')
 
-  ActiveRecord::Base.logger = Logger.new($stderr)
+  class MasterChecker
+    include ::Sidekiq::Worker
 
-  ActiveRecord::Base.establish_connection(
-    adapter: 'sqlite3',
-    database: ':memory:'
-  )
-
-  ActiveRecord::Schema.define do
-    unless ActiveRecord::Base.connection.tables.include? 'masters'
-      create_table :masters do |table|
-        table.column :whatever,                     :string
-        table.column :workflow_state,               :string
-        table.column :workflow_pending_transitions, :string
-        table.column :workflow_pending_callbacks,   :string
-      end
-    end
-
-    unless ActiveRecord::Base.connection.tables.include? 'tracks'
-      create_table :slaves do |table|
-        table.column :master_id,                    :integer
-        table.column :whatever,                     :string
-        table.column :workflow_state,               :string
-        table.column :workflow_pending_transitions, :string
-        table.column :workflow_pending_callbacks,   :string
-      end
+    def perform(*args)
+      { ok: args }
     end
   end
 
@@ -55,8 +39,9 @@ if Workflow::Join.const_defined?('ActiveRecord')
       state :after_meeting
 
       # before entering :after_meeting state, wait for @slave to enter :resolved state
-      guard :slave, inner: :after_meeting, outer: :resolved
-      guard inner: :after_meeting, outer: :resolved, &:slave
+      # guard :slave, inner: :after_meeting, outer: :resolved
+      # guard inner: :after_meeting, outer: :resolved, &:slave
+      guard inner: :after_meeting, job: MasterChecker
     end
   end
 

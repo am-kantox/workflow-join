@@ -20,6 +20,7 @@ if Workflow::Join.const_defined?('ActiveRecord')
 
     it 'enters :after_meeting when slave was already :resolved' do
       slave.resolve!
+      MasterChecker.drain
       master.go!
       expect(master.after_meeting?).to be_truthy
     end
@@ -27,6 +28,7 @@ if Workflow::Join.const_defined?('ActiveRecord')
     it 'enters :after_meeting on slave set to :resolved' do
       master.go!
       slave.reload.resolve!
+      MasterChecker.drain
       expect(master.reload.after_meeting?).to be_truthy
       expect(master.pending_transitions).to be_empty
     end

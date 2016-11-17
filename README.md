@@ -105,6 +105,43 @@ created and simple application restart will enable the feature.
 This part is hardly tested, though, that’s why the preferred way would be to
 create columns manually.
 
+### Use Sidekiq jobs as guards
+
+Starting with version `0.3.0`, we support sidekiq jobs as guards:
+
+```ruby
+  class LongRunningChecker
+    include ::Sidekiq::Worker
+
+    def perform(*_args)
+      do_requests(*args) # sleep 10
+    end
+  end
+
+  class Master < ActiveRecord::Base
+    include Workflow
+
+    workflow do
+      state :initial do
+        event :validate, transitions_to: :validated
+      end
+      state :validated
+
+      guard inner: :validated, job: LongRunningChecker
+    end
+  end
+```
+
+## Changelog
+
+#### `0.3.0` `Sidekiq` jobs as guards
+
+#### `0.2.4` `ActiveRecord` support
+
+## It is of any good?
+
+Yes.
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.

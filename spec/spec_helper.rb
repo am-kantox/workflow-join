@@ -27,6 +27,14 @@ if Workflow::Join.const_defined?('ActiveRecord')
     end
   end
 
+  class MasterRaisingChecker
+    include ::Sidekiq::Worker
+
+    def perform(*_args)
+      fail 'Raised'
+    end
+  end
+
   class Master < ActiveRecord::Base
     has_one :slave
 
@@ -42,6 +50,20 @@ if Workflow::Join.const_defined?('ActiveRecord')
       # guard :slave, inner: :after_meeting, outer: :resolved
       # guard inner: :after_meeting, outer: :resolved, &:slave
       guard inner: :after_meeting, job: MasterChecker
+    end
+  end
+
+  class RaisingMaster < Master
+    workflow do
+      state :meeting do
+        event :go, transitions_to: :after_meeting
+      end
+      state :after_meeting
+
+      # before entering :after_meeting state, wait for @slave to enter :resolved state
+      # guard :slave, inner: :after_meeting, outer: :resolved
+      # guard inner: :after_meeting, outer: :resolved, &:slave
+      guard inner: :after_meeting, job: MasterRaisingChecker
     end
   end
 

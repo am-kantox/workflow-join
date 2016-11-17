@@ -47,8 +47,8 @@ if Workflow::Join.const_defined?('ActiveRecord')
       state :after_meeting
 
       # before entering :after_meeting state, wait for @slave to enter :resolved state
-      # guard :slave, inner: :after_meeting, outer: :resolved
-      # guard inner: :after_meeting, outer: :resolved, &:slave
+      guard :slave, inner: :after_meeting, outer: :resolved
+      guard inner: :after_meeting, outer: :resolved, &:slave
       guard inner: :after_meeting, job: MasterChecker
     end
   end

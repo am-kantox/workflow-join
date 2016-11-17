@@ -7,6 +7,9 @@ inherit_from: .rubocop_todo.yml
 Style/SignalException:
   EnforcedStyle: semantic
 
+Style/Alias:
+  EnforcedStyle: prefer_alias_method
+
 Metrics/ClassLength:
   Max: 200
 

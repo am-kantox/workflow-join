@@ -1,43 +1,6 @@
 require 'spec_helper'
 
 unless Workflow::Join.const_defined?('ActiveRecord')
-
-  Object.send(:remove_const, 'SimpleMaster') if Kernel.const_defined?('SimpleMaster')
-  Object.send(:remove_const, 'SimpleSlave') if Kernel.const_defined?('SimpleSlave')
-
-  class SimpleMaster
-    include Workflow
-
-    attr_accessor :slave
-
-    def initialize(*)
-      @slave = SimpleSlave.new
-    end
-
-    workflow do
-      state :meeting do
-        event :go, transitions_to: :after_meeting
-      end
-      state :after_meeting
-
-      # before entering :after_meeting state, wait for @slave to enter :resolved state
-      guard :@slave, inner: :after_meeting, outer: :resolved
-      guard :slave, inner: :after_meeting, outer: :resolved
-      guard inner: :after_meeting, outer: :resolved, &:slave
-    end
-  end
-
-  class SimpleSlave
-    include Workflow
-
-    workflow do
-      state :unresolved do
-        event :resolve, transitions_to: :resolved
-      end
-      state :resolved
-    end
-  end
-
   describe Workflow::Join do
     let(:master) { SimpleMaster.new }
     let(:slave)  { master.slave }

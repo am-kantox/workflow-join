@@ -14,6 +14,7 @@ else
   end
 end
 
+# rubocop:disable Metrics/AbcSize
 Workflow::ClassMethods.prepend(Module.new do
   def workflow(&specification)
     # extend instances
@@ -78,6 +79,7 @@ Workflow::ClassMethods.prepend(Module.new do
     super
   end
 end)
+# rubocop:enable Metrics/AbcSize
 
 module Workflow
   module Join

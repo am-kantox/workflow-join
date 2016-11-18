@@ -23,6 +23,7 @@ if Workflow::Join.const_defined?('ActiveRecord')
     include ::Sidekiq::Worker
 
     def perform(*args)
+      fail "★★★ Args: #{args.inspect}" unless args.first.values_at(:host, :worker) == %w|Master MasterChecker|
       { ok: args }
     end
   end

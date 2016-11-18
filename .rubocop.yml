@@ -10,6 +10,18 @@ Style/SignalException:
 Style/Alias:
   EnforcedStyle: prefer_alias_method
 
+Style/PercentLiteralDelimiters:
+  PreferredDelimiters:
+    '%':  '||'
+    '%i': '||'
+    '%I': '||'
+    '%q': '||'
+    '%Q': '||'
+    '%r': '||'
+    '%s': '||'
+    '%w': '||'
+    '%W': '||'
+    '%x': '||'
 Metrics/ClassLength:
   Max: 200
 

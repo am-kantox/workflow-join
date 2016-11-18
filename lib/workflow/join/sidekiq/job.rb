@@ -109,7 +109,7 @@ module Workflow
             Job.find(args.pop['★']).tap do |job|
               # FIXME: Log this somehow
               begin
-                job.args = args
+                job.args = [*args, job.to_hash]
                 job.result = Job.worker(job.worker).new.perform(*job.args)
                 job.success!
               rescue => e

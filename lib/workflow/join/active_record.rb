@@ -23,19 +23,19 @@ module Workflow
           fail LoadError, "This module might be included in ActiveRecord::Base instances only (#{base} given.)" \
             unless model < ::ActiveRecord::Base
 
-          unless ENSURE_COLUMNS.call(model, :workflow_pending_transitions, :workflow_pending_callbacks)
-            fail LoadError, <<-MSG
+          # unless ENSURE_COLUMNS.call(model, :workflow_pending_transitions, :workflow_pending_callbacks)
+          #   fail LoadError, <<-MSG
 
-              =======================================================================================
-               This is an intended fail, next time the class is requested, it’ll be loaded properly!
-               To avoid this one should explicitly specify columns:
-                  — workflow_pending_transitions,
-                  — workflow_pending_callbacks
-               in all models, that are willing to use joined workflows.
-              =======================================================================================
+          #     =======================================================================================
+          #      This is an intended fail, next time the class is requested, it’ll be loaded properly!
+          #      To avoid this one should explicitly specify columns:
+          #         — workflow_pending_transitions,
+          #         — workflow_pending_callbacks
+          #      in all models, that are willing to use joined workflows.
+          #     =======================================================================================
 
-            MSG
-          end
+          #   MSG
+          # end
         end
       end
     end
